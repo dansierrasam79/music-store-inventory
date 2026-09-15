@@ -1,0 +1,1 @@
+"""Music Store Inventory package."""

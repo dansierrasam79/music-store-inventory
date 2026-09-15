@@ -1,16 +1,17 @@
-import searchMusicRecords
-import addMusicRecord
-import changeMusicRecords
-import viewMusicRecords
 import sys
+
+from music_store_inventory.services import (
+    add_music_record_service,
+    change_music_records_service,
+    search_music_records_service,
+    view_music_records_service,
+)
 
 def main():
     print("Welcome to the Music Store Inventory")
-    #Move to the Main Menu
-    MainMenu()
+    main_menu()
 
-def MainMenu():
-    #Printing main menu
+def main_menu():
     print("***Main Menu***")
     print("1. Search for Music Records")
     print("2. Add new Music Records")
@@ -18,25 +19,30 @@ def MainMenu():
     print("4. View All Music Records")
     print("5. Exit Main Menu")
 
-    menuSelectionInput = int(input("Enter a choice (1-5): "))
+    try:
+        menu_selection_input = int(input("Enter a choice (1-5): "))
+    except ValueError:
+        print("Please enter a valid number.")
+        main_menu()
+        return
 
-    if menuSelectionInput == 1:
-        searchMusicRecords.searchMusicRecords()
+    if menu_selection_input == 1:
+        search_music_records_service()
         print()
-        MainMenu()
-    elif menuSelectionInput == 2:
-        addMusicRecord.addMusicRecord()
-        MainMenu()
-    elif menuSelectionInput == 3:
-        changeMusicRecords.changeMusicRecords()
-        MainMenu()
-    elif menuSelectionInput == 4:
-        viewMusicRecords.viewMusicRecords()
-        MainMenu()
-    elif menuSelectionInput == 5:
+        main_menu()
+    elif menu_selection_input == 2:
+        add_music_record_service()
+        main_menu()
+    elif menu_selection_input == 3:
+        change_music_records_service()
+        main_menu()
+    elif menu_selection_input == 4:
+        view_music_records_service()
+        main_menu()
+    elif menu_selection_input == 5:
         sys.exit("Thank you for using the Music Inventory application. Goodbye!")
     else:
-        MainMenu()
+        main_menu()
 
 if __name__ == "__main__":
     main()
