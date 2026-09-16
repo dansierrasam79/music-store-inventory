@@ -1,30 +1,69 @@
 import os
-import pickle
+import sqlite3
 from typing import List
 
 from .models import MusicRecord
 
-DATA_FILE = os.path.join(os.path.dirname(__file__), "musicRecord.pkl")
+DATA_FILE = os.path.join(os.path.dirname(__file__), "music_store_inventory.db")
+
+
+def _connect() -> sqlite3.Connection:
+    connection = sqlite3.connect(DATA_FILE)
+    connection.row_factory = sqlite3.Row
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS music_records (
+            albumuniqueid INTEGER PRIMARY KEY,
+            bandartist TEXT NOT NULL,
+            albumtitle TEXT NOT NULL,
+            yearpublished TEXT NOT NULL,
+            duration TEXT NOT NULL,
+            recordlabel TEXT NOT NULL
+        )
+        """
+    )
+    connection.commit()
+    return connection
 
 
 def load_records() -> List[MusicRecord]:
-    """Load records from the pickle data file."""
-    if not os.path.exists(DATA_FILE):
-        return []
+    """Load all records from the SQLite database."""
+    with _connect() as connection:
+        rows = connection.execute(
+            """
+            SELECT albumuniqueid, bandartist, albumtitle,
+                   yearpublished, duration, recordlabel
+            FROM music_records
+            ORDER BY albumuniqueid
+            """
+        ).fetchall()
 
-    try:
-        with open(DATA_FILE, "rb") as music_record:
-            raw_records = pickle.load(music_record)
-    except (EOFError, pickle.UnpicklingError):
-        return []
-
-    return [MusicRecord.from_dict(item) for item in raw_records]
+    return [MusicRecord.from_dict(dict(row)) for row in rows]
 
 
 def save_records(records: List[MusicRecord]) -> None:
-    """Persist records to the pickle data file."""
-    with open(DATA_FILE, "wb") as music_record:
-        pickle.dump([record.to_dict() for record in records], music_record)
+    """Replace the stored records with the supplied records."""
+    with _connect() as connection:
+        connection.execute("DELETE FROM music_records")
+        connection.executemany(
+            """
+            INSERT INTO music_records (
+                albumuniqueid, bandartist, albumtitle,
+                yearpublished, duration, recordlabel
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    record.albumuniqueid,
+                    record.bandartist,
+                    record.albumtitle,
+                    record.yearpublished,
+                    record.duration,
+                    record.recordlabel,
+                )
+                for record in records
+            ],
+        )
 
 
 def next_album_id(records: List[MusicRecord]) -> int:
